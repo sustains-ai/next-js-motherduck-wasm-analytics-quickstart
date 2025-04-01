@@ -3,8 +3,6 @@
 
 import React from "react";
 import SolarData from "./components/SolarData";
-import AnnualHourlySolar from "./components/AnnualHourlySolar";
-
 export default function EnergyPage() {
     return (
         <section className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12">
@@ -15,8 +13,6 @@ export default function EnergyPage() {
                 <div className="space-y-12">
                     {/* Monthly Data and Annual Table */}
                     <SolarData />
-                    {/* Full 8760-Hour Plot */}
-                    <AnnualHourlySolar />
                 </div>
             </div>
         </section>
