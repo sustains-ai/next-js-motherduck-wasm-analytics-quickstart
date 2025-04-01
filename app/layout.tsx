@@ -1,4 +1,3 @@
-import { MotherDuckClientProvider } from "@/lib/motherduck/context/motherduckClientContext";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Link from "next/link";
@@ -16,43 +15,39 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Create App with MotherDuck Wasm",
-  description: "Build an application with MotherDuck Wasm",
+  title: "Sustains Energy", // ✅ Updated title
+  description: "Energy insights and tools for a sustainable future", // ✅ Updated description
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased bg-white dark:bg-gray-900 text-black dark:text-white`}
+          className={`${geistSans.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased bg-white dark:bg-gray-900 text-black dark:text-white`}
       >
-
-        <div className="flex flex-col min-h-screen">
-          <main className="flex-1 w-full">
-            <div className="w-full">
-              <h1 className="text-2xl font-bold mb-4 px-4 py-2"><Link href="/">Next.js MotherDuck Starter</Link></h1>
-              {/* use the sample_data database */}
-              <MotherDuckClientProvider database="sample_data">
-                {children}
-              </MotherDuckClientProvider>
-            </div>
-          </main>
-          <footer className="justify-center border-t text-center text-xs gap-8 py-4 bg-white dark:bg-gray-900">
-            <p>
-              Powered by{" "}
-              <a href="https://motherduck.com" target="_blank" className="font-bold hover:underline" rel="noreferrer">
-                MotherDuck
-              </a>
-            </p>
-          </footer>
-        </div>
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1 w-full">
+          <div className="w-full">
+            <h1 className="text-2xl font-bold mb-4 px-4 py-2">
+              <Link href="/">Sustains Energy</Link> {/* ✅ Updated header */}
+            </h1>
+            {children} {/* ✅ Children without MotherDuck */}
+          </div>
+        </main>
+        <footer className="justify-center border-t text-center text-xs gap-8 py-4 bg-white dark:bg-gray-900">
+          <p>
+            Powered by{" "}
+            <a href="https://sustains.in" className="font-bold hover:underline" rel="noreferrer">
+              Sustains.in
+            </a> {/* ✅ Updated footer */}
+          </p>
+        </footer>
+      </div>
       </body>
-
-
-    </html>
+      </html>
   );
 }
