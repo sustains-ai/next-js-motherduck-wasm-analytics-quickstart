@@ -1,7 +1,7 @@
-// app/components/SolarData.tsx
+// app/components/AnnualHourlySolar.tsx
 "use client";
 
-import React, { useState, useCallback,useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -14,32 +14,17 @@ type LatLongResponse = {
 
 type SolarDataResponse = {
     outputs: {
-        ac_monthly: number[];
-        poa_monthly: number[];
-        solrad_monthly: number[];
-        dc_monthly: number[];
-        ac_annual: number;
-        solrad_annual: number;
-        capacity_factor: number;
+        ac: number[];
     };
 };
 
-type MonthlyData = {
-    ac_monthly: number[];
-    poa_monthly: number[];
-    solrad_monthly: number[];
-    dc_monthly: number[];
+type SolarDataItem = {
+    hour: number;
+    power: number;
 };
 
-type AnnualData = {
-    ac_annual: number;
-    solrad_annual: number;
-    capacity_factor: number;
-};
-
-export default function SolarData() {
-    const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
-    const [annualData, setAnnualData] = useState<AnnualData | null>(null);
+export default function AnnualHourlySolar() {
+    const [solarData, setSolarData] = useState<SolarDataItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
     const [zipcode, setZipcode] = useState<string>('400001');
@@ -88,21 +73,14 @@ export default function SolarData() {
             }
             const data: SolarDataResponse = await response.json();
 
-            const scaleFactor = solarcapacity / 1000; // Scale based on capacity
-            const monthly = {
-                ac_monthly: data.outputs.ac_monthly.map((val) => val * scaleFactor),
-                poa_monthly: data.outputs.poa_monthly.map((val) => val * scaleFactor),
-                solrad_monthly: data.outputs.solrad_monthly, // Already scaled appropriately
-                dc_monthly: data.outputs.dc_monthly.map((val) => val * scaleFactor),
-            };
-            const annual = {
-                ac_annual: data.outputs.ac_annual * scaleFactor,
-                solrad_annual: data.outputs.solrad_annual, // No scaling needed
-                capacity_factor: data.outputs.capacity_factor, // Percentage, no scaling
-            };
+            const acPower = data.outputs.ac;
+            const solarPower = acPower.map((power) => (power * solarcapacity) / 1000);
+            const hourlyData = solarPower.map((power, index) => ({
+                hour: index,
+                power,
+            }));
 
-            setMonthlyData(monthly);
-            setAnnualData(annual);
+            setSolarData(hourlyData);
         } catch (err: unknown) {
             console.error('Error fetching solar data:', err instanceof Error ? err.message : 'Unknown error');
             setError('Data cannot be fetched for this postcode');
@@ -181,89 +159,32 @@ export default function SolarData() {
                 </button>
             </form>
 
-            {monthlyData && (
-                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#0ABF53] mb-8">
+            {solarData.length > 0 && (
+                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#0ABF53]">
                     <Plot
                         data={[
                             {
                                 type: 'scatter',
-                                x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                y: monthlyData.ac_monthly,
-                                mode: 'lines+markers',
-                                name: 'AC Monthly (kW)',
+                                x: solarData.map((d) => d.hour),
+                                y: solarData.map((d) => d.power),
+                                mode: 'lines', // ✅ Lines only—8760 markers too dense
                                 line: { color: '#0ABF53' },
-                                marker: { color: '#0ABF53' },
-                            },
-                            {
-                                type: 'scatter',
-                                x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                y: monthlyData.poa_monthly,
-                                mode: 'lines+markers',
-                                name: 'POA Monthly (kW)',
-                                line: { color: '#2ECC71' },
-                                marker: { color: '#2ECC71' },
-                            },
-                            {
-                                type: 'scatter',
-                                x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                y: monthlyData.solrad_monthly,
-                                mode: 'lines+markers',
-                                name: 'Solar Radiation (kWh/m²/day)',
-                                line: { color: '#52D769' },
-                                marker: { color: '#52D769' },
-                            },
-                            {
-                                type: 'scatter',
-                                x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                y: monthlyData.dc_monthly,
-                                mode: 'lines+markers',
-                                name: 'DC Monthly (kW)',
-                                line: { color: '#76E262' },
-                                marker: { color: '#76E262' },
                             },
                         ]}
                         layout={{
-                            height: 500,
+                            height: 600, // ✅ Taller for full year
                             margin: { l: 50, r: 50, t: 50, b: 50 },
                             xaxis: {
-                                title: 'Month',
-                                tickvals: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                ticktext: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                                title: 'Hour of Year',
+                                range: [0, 8759], // ✅ Full 8760 hours
+                                tickmode: 'linear',
+                                dtick: 720, // ✅ Monthly ticks (720 hours ≈ 30 days)
                             },
-                            yaxis: { title: 'Output' },
-                            title: { text: 'Monthly Solar Metrics', font: { size: 18 } },
-                            legend: { x: 1, y: 1, xanchor: 'right', yanchor: 'top' },
+                            yaxis: { title: 'Power Output (kW)' },
+                            title: { text: 'Annual Hourly Solar Output (8760 Hours)', font: { size: 18 } },
                         }}
-                        config={{ displayModeBar: false }}
+                        config={{ displayModeBar: true }} // ✅ Zoom/pan enabled
                     />
-                </div>
-            )}
-
-            {annualData && (
-                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#0ABF53]">
-                    <h3 className="text-xl font-bold mb-4 text-gray-800">Annual Solar Metrics</h3>
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                        <tr className="bg-gray-100">
-                            <th className="p-2 border-b">Metric</th>
-                            <th className="p-2 border-b">Value</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td className="p-2 border-b">AC Annual (kW)</td>
-                            <td className="p-2 border-b">{annualData.ac_annual.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td className="p-2 border-b">Solar Radiation Annual (kWh/m²/day)</td>
-                            <td className="p-2 border-b">{annualData.solrad_annual.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td className="p-2 border-b">Capacity Factor (%)</td>
-                            <td className="p-2 border-b">{annualData.capacity_factor.toFixed(2)}</td>
-                        </tr>
-                        </tbody>
-                    </table>
                 </div>
             )}
         </div>

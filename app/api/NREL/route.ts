@@ -9,7 +9,7 @@ export async function POST(req: Request) {
             throw new Error('NREL API key is missing in environment variables');
         }
 
-        const url = `https://developer.nrel.gov/api/pvwatts/v6.json?api_key=${apiKey}&lat=${lat}&lon=${long}&system_capacity=1&azimuth=180&tilt=40&array_type=1&module_type=1&losses=10&timeframe=hourly`;
+        const url = `https://developer.nrel.gov/api/pvwatts/v8.json?api_key=${apiKey}&lat=${lat}&lon=${long}&system_capacity=1&azimuth=180&tilt=40&array_type=1&module_type=1&losses=10&timeframe=hourly`;
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch data from NREL API');
