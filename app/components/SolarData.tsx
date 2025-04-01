@@ -135,31 +135,9 @@ export default function SolarData() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
-                <div className="flex justify-center items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                </div>
-                <p className="mt-2 text-gray-600 text-lg">Loading solar data...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-center">
-                    {error}
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="max-w-6xl mx-auto px-4 py-10">
+            {/* Form always visible */}
             <form onSubmit={handleSubmit} className="mb-8 flex justify-center gap-4">
                 <input
                     type="text"
@@ -188,7 +166,29 @@ export default function SolarData() {
                 </button>
             </form>
 
-            {solarData && (
+            {/* Loading Indicator */}
+            {loading && (
+                <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
+                    <div className="flex justify-center items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                    <p className="mt-2 text-gray-600 text-lg">Loading solar data...</p>
+                </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+                <div className="max-w-6xl mx-auto mb-8">
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-center">
+                        {error}
+                    </div>
+                </div>
+            )}
+
+            {/* Plots and Table */}
+            {solarData && !loading && (
                 <div className="space-y-12">
                     {/* Monthly Plot */}
                     <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#0ABF53]">

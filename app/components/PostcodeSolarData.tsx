@@ -1,10 +1,7 @@
-// app/components/AnnualHourlySolar.tsx
+// app/components/PostcodeSolarData.tsx
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
-
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 type LatLongResponse = {
     status?: string;
@@ -18,13 +15,13 @@ type SolarDataResponse = {
     };
 };
 
-type SolarDataItem = {
-    hour: number;
-    power: number;
+type AggregatedSolarData = {
+    day: number; // Day of year (1-365)
+    avgPower: number; // Average power for that day (kW)
 };
 
-export default function AnnualHourlySolar() {
-    const [solarData, setSolarData] = useState<SolarDataItem[]>([]);
+export default function PostcodeSolarData() {
+    const [solarData, setSolarData] = useState<AggregatedSolarData[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
     const [zipcode, setZipcode] = useState<string>('400001');
@@ -73,14 +70,18 @@ export default function AnnualHourlySolar() {
             }
             const data: SolarDataResponse = await response.json();
 
-            const acPower = data.outputs.ac;
-            const solarPower = acPower.map((power) => (power * solarcapacity) / 1000);
-            const hourlyData = solarPower.map((power, index) => ({
-                hour: index,
-                power,
-            }));
+            const acPower = data.outputs.ac.map((power) => (power * solarcapacity) / 1000);
+            // Aggregate hourly data into daily averages (8760 hours → 365 days)
+            const dailyData: AggregatedSolarData[] = [];
+            for (let day = 0; day < 365; day++) {
+                const start = day * 24;
+                const end = start + 24;
+                const dayPower = acPower.slice(start, end);
+                const avgPower = dayPower.reduce((sum, val) => sum + val, 0) / dayPower.length;
+                dailyData.push({ day: day + 1, avgPower });
+            }
 
-            setSolarData(hourlyData);
+            setSolarData(dailyData);
         } catch (err: unknown) {
             console.error('Error fetching solar data:', err instanceof Error ? err.message : 'Unknown error');
             setError('Data cannot be fetched for this postcode');
@@ -161,30 +162,25 @@ export default function AnnualHourlySolar() {
 
             {solarData.length > 0 && (
                 <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#0ABF53]">
-                    <Plot
-                        data={[
-                            {
-                                type: 'scatter',
-                                x: solarData.map((d) => d.hour),
-                                y: solarData.map((d) => d.power),
-                                mode: 'lines', // ✅ Lines only—8760 markers too dense
-                                line: { color: '#0ABF53' },
-                            },
-                        ]}
-                        layout={{
-                            height: 600, // ✅ Taller for full year
-                            margin: { l: 50, r: 50, t: 50, b: 50 },
-                            xaxis: {
-                                title: 'Hour of Year',
-                                range: [0, 8759], // ✅ Full 8760 hours
-                                tickmode: 'linear',
-                                dtick: 720, // ✅ Monthly ticks (720 hours ≈ 30 days)
-                            },
-                            yaxis: { title: 'Power Output (kW)' },
-                            title: { text: 'Annual Hourly Solar Output (8760 Hours)', font: { size: 18 } },
-                        }}
-                        config={{ displayModeBar: true }} // ✅ Zoom/pan enabled
-                    />
+                    <h3 className="text-xl font-bold mb-4 text-gray-800">Daily Average Solar Output</h3>
+                    <div className="overflow-x-auto max-h-96"> {/* ✅ Scrollable table */}
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                            <tr className="bg-gray-100 sticky top-0">
+                                <th className="p-2 border-b">Day of Year</th>
+                                <th className="p-2 border-b">Average Power (kW)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {solarData.map((item) => (
+                                <tr key={item.day}>
+                                    <td className="p-2 border-b">{item.day}</td>
+                                    <td className="p-2 border-b">{item.avgPower.toFixed(2)}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         </div>
