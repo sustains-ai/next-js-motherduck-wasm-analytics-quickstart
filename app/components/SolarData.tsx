@@ -174,7 +174,7 @@ export default function SolarData() {
                             margin: { l: 50, r: 50, t: 50, b: 50 },
                             xaxis: { title: 'Hour of Day', range: [0, 23] },
                             yaxis: { title: 'Power Output (kW)' },
-                            title: { text: '24-Hour Solar Power Output', font: { size: 18 } },
+                            title: { text: '24-Hour Solar Power Output', font: { size: 16 } },
                         }}
                         config={{ displayModeBar: false }}
                     />
